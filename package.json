@@ -1,0 +1,20 @@
+{
+  "name": "inventario-botica",
+  "version": "1.0.0",
+  "description": "inventario de una botica para el trabajo final",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jbicz034/inventario-botica.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jbicz034/inventario-botica/issues"
+  },
+  "homepage": "https://github.com/Jbicz034/inventario-botica#readme"
+}
