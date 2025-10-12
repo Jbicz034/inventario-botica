@@ -1,68 +1,48 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* Directivas de Tailwind CSS (MANDATORIO) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+/* Estilos Base para el cuerpo (Body) y la transición de colores.
+  El color se aplica a través de los contextos de tema.
+*/
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   min-height: 100vh;
+  /* Transición suave para todos los cambios de color/fondo */
+  transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Modo Claro (Default) */
+body {
+  background-color: theme('colors.bg-light');
+  color: #1F2937; /* Gris Oscuro */
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* Modo Oscuro: Aplicado cuando el elemento <html> tiene la clase 'dark' */
+.dark body {
+  background-color: #111827; /* Fondo muy oscuro */
+  color: theme('colors.text-dark');
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Estilos de Tarjetas en Modo Oscuro */
+.dark .bg-white {
+  background-color: theme('colors.card-dark');
+  border-color: #374151; /* Borde sutil */
+}
+
+/* Ajustes de Texto en Modo Oscuro */
+.dark .text-gray-800 {
+  color: theme('colors.text-dark');
+}
+
+/* Colores Base del Sidebar (Necesario si usas un color primario muy oscuro) */
+.sidebar-bg {
+  background-color: theme('colors.nova-primary.DEFAULT');
+}
+.dark .sidebar-bg {
+  background-color: theme('colors.nova-primary.dark');
 }
