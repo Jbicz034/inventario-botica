@@ -4,6 +4,7 @@ import { type ThemeMode, type ThemeContextType } from '../types/ThemeTypes'; // 
 
 // === 1. Contexto ===
 // Exportado con nombre para que el hook lo pueda consumir
+// eslint-disable-next-line react-refresh/only-export-components
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 // === 2. Proveedor del Contexto (Componente) ===
