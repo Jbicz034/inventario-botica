@@ -1,31 +1,17 @@
 // frontend/src/context/ThemeContext.tsx
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useState, useEffect, type ReactNode } from 'react';
+import { type ThemeMode, type ThemeContextType } from '../types/ThemeTypes'; // 👈 Ruta actualizada
 
-type ThemeMode = 'light' | 'dark' | 'system';
+// === 1. Contexto ===
+// Exportado con nombre para que el hook lo pueda consumir
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface ThemeContextType {
-  theme: ThemeMode;
-  setTheme: (mode: ThemeMode) => void;
-  isDarkMode: boolean; 
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-// Hook de Consumo
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme debe ser usado dentro de un ThemeProvider');
-  }
-  return context;
-};
-
+// === 2. Proveedor del Contexto (Componente) ===
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Inicializamos el tema con el valor de localStorage o 'system'
+const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const savedTheme = localStorage.getItem('theme') as ThemeMode;
     return savedTheme || 'system';
@@ -36,14 +22,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // 1. Función para determinar si se debe aplicar el modo oscuro
     const checkShouldBeDark = (mode: ThemeMode) => {
         return mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
     
     const shouldBeDark = checkShouldBeDark(theme);
     
-    // 2. Aplicar/Remover la clase 'dark' del <html>
     if (shouldBeDark) {
       root.classList.add('dark');
       setIsDarkMode(true);
@@ -52,12 +36,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       setIsDarkMode(false);
     }
 
-    // 3. Guardar la preferencia en localStorage
     localStorage.setItem('theme', theme);
 
-    // 4. Listener para el modo 'system' (detecta cambios en el SO)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
     const updateThemeBasedOnSystem = () => {
         if (theme === 'system') {
             const currentShouldBeDark = mediaQuery.matches;
@@ -73,7 +54,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     mediaQuery.addEventListener('change', updateThemeBasedOnSystem);
     
-    // Cleanup: Remover el listener cuando el componente se desmonte o el tema cambie
     return () => mediaQuery.removeEventListener('change', updateThemeBasedOnSystem);
 
   }, [theme]); 
@@ -84,3 +64,5 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
+
+export default ThemeProvider;

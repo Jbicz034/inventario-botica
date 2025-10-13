@@ -1,80 +1,71 @@
-// frontend/src/context/AuthContext.tsx
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+// frontend/src/context/ThemeContext.tsx
+import React, { createContext, useState, useEffect, type ReactNode } from 'react';
+import { ThemeMode, ThemeContextType } from './ThemeTypes';
 
-// 1. Definición de Tipos con TypeScript
-interface User { name: string; email: string }
+// === 1. Contexto ===
+// Exportado con nombre para que ThemeHook.ts pueda importarlo.
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface AuthContextType {
-  isLoggedIn: boolean;
-  user: User | null;
-  isLoginModalOpen: boolean;
-  login: (email: string, password: string) => void;
-  logout: () => void;
-  openLoginModal: () => void;
-  closeLoginModal: () => void;
-}
-
-// 2. Creación del Contexto
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-interface AuthProviderProps {
+// === 2. Proveedor del Contexto (Componente) ===
+interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const navigate = useNavigate();
+const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const savedTheme = localStorage.getItem('theme') as ThemeMode;
+    return savedTheme || 'system';
+  });
 
-  // 3. Lógica de Autenticación (Simulada)
-  const login = (email: string, password: string) => {
-    // Aquí se integraría la llamada a la API (authService.ts)
-    if (email === 'admin@novasalud.com' && password === '1234') {
-      setIsLoggedIn(true);
-      setUser({ name: 'Administrador Nova Salud', email });
-      setIsLoginModalOpen(false); // Cierra el modal
-      navigate('/dashboard'); // Redirige
-    } else {
-      // Usar Alert.tsx en el futuro
-      alert('Credenciales incorrectas. Intenta con admin@novasalud.com / 1234');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    
+    const checkShouldBeDark = (mode: ThemeMode) => {
+        return mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
-  };
+    
+    const shouldBeDark = checkShouldBeDark(theme);
+    
+    // Aplicar/Remover la clase 'dark' del <html>
+    if (shouldBeDark) {
+      root.classList.add('dark');
+      setIsDarkMode(true);
+    } else {
+      root.classList.remove('dark');
+      setIsDarkMode(false);
+    }
 
-  const logout = () => {
-    setIsLoggedIn(false);
-    setUser(null);
-    setIsLoginModalOpen(false);
-    // Redirige a la raíz que a su vez forzará la apertura del modal al no estar logueado
-    navigate('/'); 
-  };
+    localStorage.setItem('theme', theme);
 
-  const openLoginModal = () => setIsLoginModalOpen(true);
-  const closeLoginModal = () => setIsLoginModalOpen(false);
+    // Listener para el modo 'system'
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateThemeBasedOnSystem = () => {
+        if (theme === 'system') {
+            const currentShouldBeDark = mediaQuery.matches;
+            if (currentShouldBeDark) {
+                root.classList.add('dark');
+                setIsDarkMode(true);
+            } else {
+                root.classList.remove('dark');
+                setIsDarkMode(false);
+            }
+        }
+    };
+
+    mediaQuery.addEventListener('change', updateThemeBasedOnSystem);
+    
+    return () => mediaQuery.removeEventListener('change', updateThemeBasedOnSystem);
+
+  }, [theme]); 
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        isLoggedIn, 
-        user, 
-        isLoginModalOpen,
-        login, 
-        logout,
-        openLoginModal,
-        closeLoginModal,
-      }}
-    >
+    <ThemeContext.Provider value={{ theme, setTheme, isDarkMode }}>
       {children}
-    </AuthContext.Provider>
+    </ThemeContext.Provider>
   );
 };
 
-// 4. Hook de Consumo
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
-};
+// Exportamos solo el componente proveedor como exportación por defecto
+export default ThemeProvider;
