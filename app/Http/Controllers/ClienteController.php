@@ -3,70 +3,113 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Services\ApiPeruService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
-    public function index(): JsonResponse
+    protected $apiPeruService;
+
+    public function __construct(ApiPeruService $apiPeruService)
     {
-        $clientes = Cliente::all();
-        return response()->json($clientes);
+        $this->apiPeruService = $apiPeruService;
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * Consultar RUC/DNI en API Perú
+     */
+    public function consultarDocumento(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:clientes,email',
-            'telefono' => 'nullable|string|max:20',
-            'direccion' => 'nullable|string'
+        $request->validate([
+            'tipo' => 'required|in:ruc,dni',
+            'numero' => 'required|string|max:20'
         ]);
 
-        $cliente = Cliente::create($validated);
+        $tipo = $request->tipo;
+        $numero = $request->numero;
+
+        // Primero verificar si ya existe en la base de datos
+        $clienteExistente = Cliente::porDocumento($numero)->first();
+        if ($clienteExistente) {
+            return response()->json([
+                'success' => true,
+                'data' => $clienteExistente,
+                'source' => 'database'
+            ]);
+        }
+
+        // Consultar API Perú
+        if ($tipo === 'ruc') {
+            $resultado = $this->apiPeruService->consultarRuc($numero);
+        } else {
+            $resultado = $this->apiPeruService->consultarDni($numero);
+        }
+
+        if (!$resultado['success']) {
+            return response()->json([
+                'success' => false,
+                'error' => $resultado['error']
+            ], 400);
+        }
+
+        // Formatear respuesta según el tipo de documento
+        $datosApi = $resultado['data'];
+        $clienteData = $this->formatearDatosCliente($tipo, $datosApi, $numero);
+
+        return response()->json([
+            'success' => true,
+            'data' => $clienteData,
+            'source' => 'apiperu'
+        ]);
+    }
+
+    /**
+     * Crear cliente con datos de API Perú
+     */
+    public function crearDesdeConsulta(Request $request): JsonResponse
+    {
+        $request->validate([
+            'tipo_documento' => 'required|in:ruc,dni',
+            'numero_documento' => 'required|string|max:20|unique:clientes',
+            'razon_social' => 'required|string',
+            'nombre_comercial' => 'nullable|string',
+            'direccion' => 'nullable|string',
+            'telefono' => 'nullable|string',
+            'email' => 'nullable|email'
+        ]);
+
+        $cliente = Cliente::create($request->all());
+
         return response()->json($cliente, 201);
     }
 
-    public function show(Cliente $cliente): JsonResponse
+    /**
+     * Formatear datos de API Perú para cliente
+     */
+    private function formatearDatosCliente(string $tipo, array $datosApi, string $numero): array
     {
-        return response()->json($cliente->load('ventas'));
-    }
-
-    public function update(Request $request, Cliente $cliente): JsonResponse
-    {
-        $validated = $request->validate([
-            'nombre' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:clientes,email,' . $cliente->id,
-            'telefono' => 'sometimes|string|max:20',
-            'direccion' => 'sometimes|string'
-        ]);
-
-        $cliente->update($validated);
-        return response()->json($cliente);
-    }
-
-    public function destroy(Cliente $cliente): JsonResponse
-    {
-        // Verificar si el cliente tiene ventas antes de eliminar
-        if ($cliente->ventas()->count() > 0) {
-            return response()->json([
-                'error' => 'No se puede eliminar el cliente porque tiene ventas asociadas'
-            ], 422);
+        if ($tipo === 'ruc') {
+            return [
+                'tipo_documento' => 'ruc',
+                'numero_documento' => $numero,
+                'razon_social' => $datosApi['razonSocial'] ?? '',
+                'nombre_comercial' => $datosApi['nombreComercial'] ?? '',
+                'direccion' => $datosApi['direccion'] ?? '',
+                'estado' => 'activo'
+            ];
+        } else {
+            // Para DNI
+            return [
+                'tipo_documento' => 'dni',
+                'numero_documento' => $numero,
+                'razon_social' => $datosApi['nombres'] . ' ' . $datosApi['apellidoPaterno'] . ' ' . $datosApi['apellidoMaterno'],
+                'nombre_comercial' => $datosApi['nombres'] . ' ' . $datosApi['apellidoPaterno'] . ' ' . $datosApi['apellidoMaterno'],
+                'direccion' => '',
+                'estado' => 'activo'
+            ];
         }
-
-        $cliente->delete();
-        return response()->json(['message' => 'Cliente eliminado correctamente']);
     }
 
-    public function buscar(Request $request): JsonResponse
-    {
-        $termino = $request->query('q');
-        
-        if (!$termino) {
-            return response()->json([]);
-        }
-
-        $clientes = Cliente::buscar($termino)->get();
-        return response()->json($clientes);
-    }
 }

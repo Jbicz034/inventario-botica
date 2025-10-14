@@ -13,7 +13,7 @@ Route::get('/health', function () {
     return response()->json(['status' => 'OK', 'timestamp' => now()]);
 });
 
-// Rutas protegidas
+// Rutas protegidas con Sanctum
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
@@ -25,12 +25,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Ventas
     Route::apiResource('ventas', VentaController::class);
 
-    // Dentro del grupo de rutas protegidas
-    Route::apiResource('clientes', ClienteController::class);
-    Route::get('clientes/buscar/q', [ClienteController::class, 'buscar']);
-
+    // Clientes
+    Route::post('clientes/consultar-documento', [ClienteController::class, 'consultarDocumento']);
+    Route::post('clientes/crear-desde-consulta', [ClienteController::class, 'crearDesdeConsulta']);
 
 });
+
 
 
 
