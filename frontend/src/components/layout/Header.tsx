@@ -1,80 +1,99 @@
 // frontend/src/components/layout/Header.tsx
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-
-// Iconos Placeholders (se pueden reemplazar con un paquete como lucide-react)
-const SunIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>;
-const MoonIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>;
-const SystemIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1-4-5-4 10.334 1.294A1 1 0 0014 10.038V12a1 1 0 001 1h2a1 1 0 001-1V8.683a1 1 0 00-.732-.958l-5.356-1.607a2 2 0 00-2.316 1.156L8.684 10.57"></path></svg>;
-
+import { Menu, Search, Moon, Sun, Monitor } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { type ThemeMode } from '../../types/ThemeTypes'; // Asegúrate de que este tipo exista
+import type { NavLink } from 'react-router-dom';
 
 interface HeaderProps {
-  setIsSidebarOpen: (isOpen: boolean) => void;
+    setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
-  const { user, logout } = useAuth();
-  const { theme, setTheme, isDarkMode } = useTheme();
+    const { isLoggedIn } = useAuth();
+    const { theme, setTheme, isDarkMode } = useTheme();
 
-  return (
-    <header className="sticky top-0 z-20 w-full bg-white shadow-sm dark:bg-card-dark transition-colors duration-300">
-      <div className="flex items-center justify-between h-16 px-4 lg:pl-6">
-        
-        {/* 1. Botón de Menú Hamburguesa (Móvil) */}
-        <button
-          className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-nova-primary focus:outline-none"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
+    // Iconos para el selector de tema
+    const themeIcons: Record<ThemeMode, React.ElementType> = {
+        light: Sun,
+        dark: Moon,
+        system: Monitor,
+    };
+    
+    // Función para alternar el tema: light -> dark -> system -> light
+    const toggleTheme = () => {
+        const themes: ThemeMode[] = ['light', 'dark', 'system'];
+        const currentIndex = themes.indexOf(theme);
+        const nextIndex = (currentIndex + 1) % themes.length;
+        setTheme(themes[nextIndex]);
+    };
 
-        {/* 2. Título (Solo visible en escritorio) */}
-        <div className="flex-1 text-lg font-semibold text-gray-800 dark:text-text-dark hidden lg:block">
-          Bienvenido(a), {user?.name || 'Usuario'}
-        </div>
-        
-        {/* 3. Módulo de Usuario y Tema */}
-        <div className="flex items-center space-x-4">
-          
-          {/* Selector de Tema */}
-          <div className="flex items-center space-x-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-full">
-            <button 
-              onClick={() => setTheme('light')} 
-              className={`p-2 rounded-full transition-colors ${theme === 'light' ? 'bg-nova-secondary text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-              title="Modo Claro"
-            >
-              <SunIcon />
-            </button>
-            <button 
-              onClick={() => setTheme('dark')} 
-              className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'bg-nova-secondary text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-              title="Modo Oscuro"
-            >
-              <MoonIcon />
-            </button>
-            <button 
-              onClick={() => setTheme('system')} 
-              className={`p-2 rounded-full transition-colors ${theme === 'system' ? 'bg-nova-secondary text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-              title="Modo Sistema"
-            >
-              <SystemIcon />
-            </button>
-          </div>
+    return (
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm dark:bg-card-dark/90 dark:border-gray-700 transition-colors duration-300">
+            <div className="flex justify-between items-center">
+                
+                <div className="flex items-center">
+                    {/* Botón para abrir Sidebar (Solo visible en móviles si está logeado) */}
+                    {isLoggedIn && (
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="text-gray-600 hover:text-nova-primary lg:hidden p-2 mr-4 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:text-nova-secondary dark:hover:bg-gray-700 transition-colors duration-200"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                    )}
+                    
+                    {/* Barra de Búsqueda Principal (Solo visible si está logeado) */}
+                    {isLoggedIn && (
+                        <div className="hidden md:block relative w-96">
+                            <input
+                                type="text"
+                                placeholder="Buscar productos, clientes o reportes..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:ring-nova-primary focus:border-nova-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-shadow duration-200"
+                            />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        </div>
+                    )}
+                </div>
 
-          {/* Botón de Logout */}
-          <button 
-            onClick={logout}
-            className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            Salir
-          </button>
-        </div>
-      </div>
-    </header>
-  );
+                {/* Controles de Usuario y Tema */}
+                <div className="flex items-center space-x-4">
+                    
+                    {/* Título de Bienvenida (Si no está logeado) */}
+                    {!isLoggedIn && (
+                        <span className="text-lg font-semibold text-gray-800 dark:text-white">
+                            Bienvenido a Nova Salud
+                        </span>
+                    )}
+
+                    {/* Botón/Selector de Tema */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 rounded-full text-gray-600 hover:text-nova-primary hover:bg-gray-100 dark:text-gray-300 dark:hover:text-nova-secondary dark:hover:bg-gray-700 transition-colors duration-200"
+                        title={`Modo actual: ${theme}`}
+                    >
+                        {React.createElement(themeIcons[theme], { className: "w-6 h-6" })}
+                    </button>
+
+                    {/* Elemento de usuario (podría ser un avatar o un botón de login) */}
+                    {isLoggedIn ? (
+                        <div className="flex items-center space-x-2">
+                           <span className="text-gray-800 dark:text-white text-sm hidden sm:inline">{useAuth().user?.name || 'Admin'}</span>
+                           <div className="w-8 h-8 rounded-full bg-nova-primary flex items-center justify-center text-white font-bold text-sm">
+                               {/* Inicial del usuario */}
+                               {useAuth().user?.name.charAt(0) || 'A'}
+                           </div>
+                        </div>
+                    ) : (
+                        <NavLink to="/login" className="bg-nova-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-nova-primary-dark transition-colors duration-200">
+                            Iniciar Sesión
+                        </NavLink>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
 };
 
 export default Header;

@@ -1,7 +1,7 @@
 // frontend/src/pages/RegisterPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Logo from '../assets/logo-botica-novasalud.svg';
+import Logo from '/logo-botica-novasalud.svg';
 
 const RegisterPage: React.FC = () => {
   return (

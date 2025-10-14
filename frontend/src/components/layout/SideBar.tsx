@@ -1,30 +1,19 @@
 // frontend/src/components/layout/Sidebar.tsx
-import React, { type JSX } from 'react';
-import { NavLink } from 'react-router-dom';
-import Logo from '../../assets/logo-botica-novasalud.svg';
-
-// === DEFINICIÓN DE ICONOS SVG ===
-// Nota: Puedes reemplazar estas funciones con iconos de una librería como Lucide, Heroicons, etc.
-const HomeIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-10v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1V9a1 1 0 011-1h2a1 1 0 011 1v3m-6 6h6"></path></svg>;
-const ShoppingCartIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>;
-const PackageIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10m0-4.492l-4.707 4.707a1 1 0 01-1.414 0L4 17.07V19a2 2 0 002 2h12a2 2 0 002-2v-1.93l-1.879-1.879a1 1 0 010-1.414L16 12"></path></svg>;
-const UsersIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h-3a1 1 0 01-1-1v-4a1 1 0 00-1-1H9a1 1 0 00-1 1v4a1 1 0 01-1 1H4a2 2 0 01-2-2v-2a4 4 0 014-4h1a4 4 0 014-4h2a4 4 0 014 4h1a4 4 0 014 4v2a2 2 0 01-2 2z"></path></svg>;
-const ChartIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-0v8m-4-0v8m8-16v8m0-12v4"></path></svg>;
-
-// === DEFINICIÓN DE LA NAVEGACIÓN ===
-interface NavItem {
-  name: string;
-  href: string;
-  icon: () => JSX.Element;
-}
-
-const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Venta Rápida', href: '/sales', icon: ShoppingCartIcon },
-  { name: 'Inventario', href: '/inventory', icon: PackageIcon },
-  { name: 'Clientes', href: '/clients', icon: UsersIcon },
-  { name: 'Reportes', href: '/reports', icon: ChartIcon },
-];
+import React from "react";
+import { NavLink } from "react-router-dom";
+// Iconos de Lucide-React
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  Package, 
+  Users, 
+  BarChart3,
+  LogOut,
+  X, // Para el botón de cerrar en móvil
+  BriefcaseMedical 
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme'; // Asumiendo que existe
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,54 +21,96 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
+  const { isDarkMode } = useTheme();
+  const { logout, user } = useAuth(); // Obtenemos la info de usuario y el logout
+  
+  const navItems = [
+    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/sales", icon: ShoppingCart, label: "Ventas" },
+    { to: "/inventory", icon: Package, label: "Inventario" },
+    { to: "/clients", icon: Users, label: "Clientes" },
+    { to: "/reports", icon: BarChart3, label: "Reportes" },
+  ];
+
+  // Estilos base de los enlaces
+  const baseClasses = "flex items-center p-3 rounded-xl transition-all duration-200 text-sm font-medium group";
+  const defaultClasses = "text-gray-600 dark:text-gray-300 hover:bg-nova-primary/10 dark:hover:bg-nova-primary-dark/20";
+  const activeClasses = "bg-nova-primary text-white shadow-md shadow-nova-primary/30 dark:shadow-none";
+
+  const handleClose = () => setIsOpen(false);
+
   return (
     <>
-      {/* Overlay para dispositivos móviles */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-30 bg-gray-900 bg-opacity-70 lg:hidden" 
-          onClick={() => setIsOpen(false)}
-        ></div>
-      )}
+      {/* 1. Overlay (Solo en Móviles) */}
+      <div
+        className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100 backdrop-blur-sm bg-gray-900/50' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={handleClose}
+      />
 
-      {/* Menú Lateral Fijo */}
-      <div 
-        className={`fixed inset-y-0 left-0 z-40 w-64 sidebar-bg text-white 
-          transform transition-transform duration-300 ease-in-out shadow-xl 
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-          lg:translate-x-0 lg:static lg:flex lg:flex-col lg:z-0`}
+      {/* 2. Sidebar Principal */}
+      <div
+        // w-64 es el ancho fijo. bg-white/dark es el fondo.
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl lg:static lg:translate-x-0 transform transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } dark:bg-card-dark flex-shrink-0`}
       >
-        {/* Área del Logo */}
-        <div className="flex items-center justify-center h-16 border-b border-nova-primary-dark p-2">
-          <img 
-            src={Logo} 
-            alt="Nova Salud Logo" 
-            className="h-10 w-auto filter grayscale-0 brightness-150" 
-          />
-        </div>
-
-        {/* Navegación */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
-          {navigation.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) => 
-                `flex items-center px-4 py-2 text-sm font-medium rounded-lg 
-                 transition-colors duration-200 
-                 ${isActive 
-                    ? 'bg-nova-secondary text-white shadow-md' 
-                    : 'text-gray-100 hover:bg-nova-primary-light hover:text-white' 
-                 }`
-              }
-              onClick={() => setIsOpen(false)} 
+        <div className="p-6 h-full flex flex-col">
+          
+          {/* Logo y Encabezado */}
+          <div className="flex justify-between items-center mb-10">
+            <div className="flex items-center">
+              {/* Ícono de la Botica */}
+              <BriefcaseMedical className="w-8 h-8 text-nova-primary mr-2" />
+              <h1 className="text-xl font-extrabold text-gray-900 dark:text-white">Nova Salud</h1>
+            </div>
+            
+            {/* Botón de cerrar en móvil */}
+            <button 
+                onClick={handleClose} 
+                className="lg:hidden p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              {/* Renderizar Icono SVG */}
-              <item.icon />
-              <span className="ml-3">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
+                <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Navegación Principal */}
+          <nav className="flex-1 space-y-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={handleClose} 
+                className={({ isActive }) => 
+                  `${baseClasses} ${isActive ? activeClasses : defaultClasses}`
+                }
+              >
+                {/* Renderizado de Íconos */}
+                <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-nova-primary group-hover:text-nova-primary-dark'}`} />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+          
+          {/* Pie de Sidebar (Usuario y Logout) */}
+          <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+            {/* Información del Usuario */}
+            <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                <p className="text-xs font-semibold text-gray-800 dark:text-white">{user?.name || 'Usuario'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@novasalud.com'}</p>
+            </div>
+
+            {/* Botón de Logout */}
+            <button 
+              onClick={logout}
+              className={`${baseClasses} w-full justify-center bg-red-500 hover:bg-red-600 text-white`}
+            >
+              <LogOut className="w-5 h-5 mr-2" />
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
