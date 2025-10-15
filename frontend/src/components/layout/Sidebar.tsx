@@ -87,8 +87,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 }
               >
                 {/* Renderizado de Íconos */}
-                <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-nova-primary group-hover:text-nova-primary-dark'}`} />
-                <span>{item.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-nova-primary group-hover:text-nova-primary-dark'}`} />
+                    <span>{item.label}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>

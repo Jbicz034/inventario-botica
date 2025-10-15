@@ -1,18 +1,18 @@
 // frontend/src/components/layout/Header.tsx
 import React from 'react';
 import { Menu, Search, Moon, Sun, Monitor } from 'lucide-react';
+import { NavLink } from 'react-router-dom'; // Cambiado: importación correcta de NavLink
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { type ThemeMode } from '../../types/ThemeTypes'; // Asegúrate de que este tipo exista
-import type { NavLink } from 'react-router-dom';
+import { type ThemeMode } from '../../types/ThemeTypes';
 
 interface HeaderProps {
     setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
-    const { isLoggedIn } = useAuth();
-    const { theme, setTheme, isDarkMode } = useTheme();
+    const { isLoggedIn, user } = useAuth(); // Cambiado: extraer user directamente del hook
+    const { theme, setTheme } = useTheme();
 
     // Iconos para el selector de tema
     const themeIcons: Record<ThemeMode, React.ElementType> = {
@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
         system: Monitor,
     };
     
-    // Función para alternar el tema: light -> dark -> system -> light
+    // Función para alternar el tema
     const toggleTheme = () => {
         const themes: ThemeMode[] = ['light', 'dark', 'system'];
         const currentIndex = themes.indexOf(theme);
@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
             <div className="flex justify-between items-center">
                 
                 <div className="flex items-center">
-                    {/* Botón para abrir Sidebar (Solo visible en móviles si está logeado) */}
+                    {/* Botón para abrir Sidebar */}
                     {isLoggedIn && (
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                         </button>
                     )}
                     
-                    {/* Barra de Búsqueda Principal (Solo visible si está logeado) */}
+                    {/* Barra de Búsqueda Principal */}
                     {isLoggedIn && (
                         <div className="hidden md:block relative w-96">
                             <input
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                 {/* Controles de Usuario y Tema */}
                 <div className="flex items-center space-x-4">
                     
-                    {/* Título de Bienvenida (Si no está logeado) */}
+                    {/* Título de Bienvenida */}
                     {!isLoggedIn && (
                         <span className="text-lg font-semibold text-gray-800 dark:text-white">
                             Bienvenido a Nova Salud
@@ -76,17 +76,21 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                         {React.createElement(themeIcons[theme], { className: "w-6 h-6" })}
                     </button>
 
-                    {/* Elemento de usuario (podría ser un avatar o un botón de login) */}
+                    {/* Elemento de usuario */}
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-2">
-                           <span className="text-gray-800 dark:text-white text-sm hidden sm:inline">{useAuth().user?.name || 'Admin'}</span>
+                           <span className="text-gray-800 dark:text-white text-sm hidden sm:inline">
+                               {user?.name || 'Admin'} {/* Cambiado: usar user extraído del hook */}
+                           </span>
                            <div className="w-8 h-8 rounded-full bg-nova-primary flex items-center justify-center text-white font-bold text-sm">
-                               {/* Inicial del usuario */}
-                               {useAuth().user?.name.charAt(0) || 'A'}
+                               {user?.name?.charAt(0) || 'A'} {/* Cambiado: manejo seguro de opcional */}
                            </div>
                         </div>
                     ) : (
-                        <NavLink to="/login" className="bg-nova-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-nova-primary-dark transition-colors duration-200">
+                        <NavLink 
+                            to="/login" 
+                            className="bg-nova-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-nova-primary-dark transition-colors duration-200"
+                        >
                             Iniciar Sesión
                         </NavLink>
                     )}
