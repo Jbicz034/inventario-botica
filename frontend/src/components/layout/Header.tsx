@@ -1,7 +1,7 @@
 // frontend/src/components/layout/Header.tsx
 import React from 'react';
 import { Menu, Search, Moon, Sun, Monitor } from 'lucide-react';
-import { NavLink } from 'react-router-dom'; // Cambiado: importación correcta de NavLink
+import { NavLink } from 'react-router-dom'; 
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { type ThemeMode } from '../../types/ThemeTypes';
@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
-    const { isLoggedIn, user } = useAuth(); // Cambiado: extraer user directamente del hook
+    const { isLoggedIn, user } = useAuth();
     const { theme, setTheme } = useTheme();
 
     // Iconos para el selector de tema
@@ -30,7 +30,8 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
     };
 
     return (
-        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm dark:bg-card-dark/90 dark:border-gray-700 transition-colors duration-300">
+        // Se corrige el fondo oscuro para usar gray-900 (estándar) en lugar de card-dark
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm dark:bg-gray-900/90 dark:border-gray-700 transition-colors duration-300"> 
             <div className="flex justify-between items-center">
                 
                 <div className="flex items-center">
@@ -44,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                         </button>
                     )}
                     
-                    {/* Barra de Búsqueda Principal */}
+                    {/* Barra de Búsqueda Principal (Solo visible si está logeado) */}
                     {isLoggedIn && (
                         <div className="hidden md:block relative w-96">
                             <input
@@ -60,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                 {/* Controles de Usuario y Tema */}
                 <div className="flex items-center space-x-4">
                     
-                    {/* Título de Bienvenida */}
+                    {/* Título de Bienvenida (Si no está logeado) */}
                     {!isLoggedIn && (
                         <span className="text-lg font-semibold text-gray-800 dark:text-white">
                             Bienvenido a Nova Salud
@@ -80,10 +81,10 @@ const Header: React.FC<HeaderProps> = ({ setIsSidebarOpen }) => {
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-2">
                            <span className="text-gray-800 dark:text-white text-sm hidden sm:inline">
-                               {user?.name || 'Admin'} {/* Cambiado: usar user extraído del hook */}
+                               {user?.name || 'Admin'}
                            </span>
                            <div className="w-8 h-8 rounded-full bg-nova-primary flex items-center justify-center text-white font-bold text-sm">
-                               {user?.name?.charAt(0) || 'A'} {/* Cambiado: manejo seguro de opcional */}
+                               {user?.name?.charAt(0) || 'A'}
                            </div>
                         </div>
                     ) : (

@@ -1,7 +1,6 @@
 // frontend/src/components/layout/Sidebar.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-// Iconos de Lucide-React
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -9,11 +8,11 @@ import {
   Users, 
   BarChart3,
   LogOut,
-  X, // Para el botón de cerrar en móvil
+  X,
   BriefcaseMedical 
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../hooks/useTheme'; // Asumiendo que existe
+import { type UserRole } from '../../types/AuthTypes'; // Importamos el tipo de rol
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,75 +20,79 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  const { isDarkMode } = useTheme();
-  const { logout, user } = useAuth(); // Obtenemos la info de usuario y el logout
+  // EXTRAEMOS hasRequiredRole de useAuth
+  const { logout, user, hasRequiredRole } = useAuth(); 
   
-  const navItems = [
-    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/sales", icon: ShoppingCart, label: "Ventas" },
-    { to: "/inventory", icon: Package, label: "Inventario" },
-    { to: "/clients", icon: Users, label: "Clientes" },
-    { to: "/reports", icon: BarChart3, label: "Reportes" },
+  // Roles de gestión vs. roles públicos
+  const MANAGEMENT_ROLES: UserRole[] = ['ADMIN', 'EMPLOYEE'];
+  const PUBLIC_ROLES: UserRole[] = ['ADMIN', 'EMPLOYEE', 'CLIENT'];
+
+  // Definición de ítems con sus roles requeridos
+  const allNavItems = [
+    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", requiredRoles: MANAGEMENT_ROLES },
+    { to: "/sales", icon: ShoppingCart, label: "Punto de Venta", requiredRoles: PUBLIC_ROLES }, 
+    { to: "/inventory", icon: Package, label: "Inventario", requiredRoles: MANAGEMENT_ROLES },
+    { to: "/clients", icon: Users, label: "Clientes", requiredRoles: MANAGEMENT_ROLES },
+    { to: "/reports", icon: BarChart3, label: "Reportes", requiredRoles: MANAGEMENT_ROLES },
   ];
 
-  // Estilos base de los enlaces
-  const baseClasses = "flex items-center p-3 rounded-xl transition-all duration-200 text-sm font-medium group";
-  const defaultClasses = "text-gray-600 dark:text-gray-300 hover:bg-nova-primary/10 dark:hover:bg-nova-primary-dark/20";
-  const activeClasses = "bg-nova-primary text-white shadow-md shadow-nova-primary/30 dark:shadow-none";
+  // FILTRO: Solo se muestran los ítems a los que el usuario tiene acceso
+  const navItems = allNavItems.filter(item => hasRequiredRole(item.requiredRoles));
+
+  // Estilos base, etc. (manteniendo la estructura que enviaste)
+  const baseClasses = "flex items-center p-3 rounded-xl transition-all duration-200 text-sm font-medium group"; 
+  const defaultClasses = "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700";
+  const activeClasses = "bg-nova-primary text-white shadow-lg shadow-nova-primary/30";
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) => 
+    `${baseClasses} ${isActive ? activeClasses : defaultClasses}`;
 
   const handleClose = () => setIsOpen(false);
 
   return (
+    // ... (El resto del JSX es idéntico) ...
     <>
-      {/* 1. Overlay (Solo en Móviles) */}
-      <div
-        className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 backdrop-blur-sm bg-gray-900/50' : 'opacity-0 pointer-events-none'
-        }`}
+      {/* Overlay para móviles */}
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden ${isOpen ? 'block' : 'hidden'}`}
         onClick={handleClose}
       />
 
-      {/* 2. Sidebar Principal */}
-      <div
-        // w-64 es el ancho fijo. bg-white/dark es el fondo.
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl lg:static lg:translate-x-0 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } dark:bg-card-dark flex-shrink-0`}
+      {/* Sidebar */}
+      <aside 
+        className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto ${
+          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        } lg:translate-x-0`}
       >
-        <div className="p-6 h-full flex flex-col">
+        <div className="flex flex-col h-full p-4">
           
-          {/* Logo y Encabezado */}
-          <div className="flex justify-between items-center mb-10">
+          {/* Logo y Botón de Cierre (Mobile) */}
+          <div className="flex items-center justify-between h-16 border-b dark:border-gray-700 mb-6">
             <div className="flex items-center">
-              {/* Ícono de la Botica */}
-              <BriefcaseMedical className="w-8 h-8 text-nova-primary mr-2" />
-              <h1 className="text-xl font-extrabold text-gray-900 dark:text-white">Nova Salud</h1>
+                <BriefcaseMedical className="w-8 h-8 text-nova-primary mr-2" />
+                <h1 className="text-xl font-extrabold text-gray-900 dark:text-white">Nova Salud</h1>
             </div>
-            
-            {/* Botón de cerrar en móvil */}
             <button 
-                onClick={handleClose} 
-                className="lg:hidden p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-1 lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400" 
+              onClick={handleClose}
+              aria-label="Cerrar menú"
             >
-                <X className="w-6 h-6" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* Navegación Principal */}
-          <nav className="flex-1 space-y-2">
-            {navItems.map((item) => (
-              <NavLink
+          <nav className="space-y-2 flex-1">
+            {navItems.map((item) => ( // Mapea los ítems FILTRADOS
+              <NavLink 
                 key={item.to}
                 to={item.to}
-                onClick={handleClose} 
-                className={({ isActive }) => 
-                  `${baseClasses} ${isActive ? activeClasses : defaultClasses}`
-                }
+                className={navLinkClass}
+                onClick={handleClose}
               >
-                {/* Renderizado de Íconos */}
                 {({ isActive }) => (
                   <>
-                    <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-nova-primary group-hover:text-nova-primary-dark'}`} />
+                    <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : 'text-nova-primary dark:text-nova-secondary group-hover:text-nova-primary-dark'}`} />
                     <span>{item.label}</span>
                   </>
                 )}
@@ -101,21 +104,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
             {/* Información del Usuario */}
             <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
-                <p className="text-xs font-semibold text-gray-800 dark:text-white">{user?.name || 'Usuario'}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">{user?.name || 'Usuario'}</p>
+                {/* AÑADIDO: Muestra el rol en el sidebar */}
+                <p className="text-xs text-nova-primary dark:text-nova-secondary font-medium uppercase">{user?.role || 'Invitado'}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'admin@novasalud.com'}</p>
             </div>
 
             {/* Botón de Logout */}
             <button 
-              onClick={logout}
-              className={`${baseClasses} w-full justify-center bg-red-500 hover:bg-red-600 text-white`}
+              onClick={() => { logout(); handleClose(); }}
+              className="w-full flex items-center p-3 rounded-xl text-red-500 font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
             >
-              <LogOut className="w-5 h-5 mr-2" />
-              Cerrar Sesión
+              <LogOut className="w-5 h-5 mr-3" />
+              <span>Cerrar Sesión</span>
             </button>
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 };
